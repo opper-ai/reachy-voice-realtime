@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reachy Voice Agent</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #1a1d24;
+      --border: #2a2f3a;
+      --text: #e6e8ec;
+      --muted: #8b94a6;
+      --accent: #7ee787;
+      --user: #58a6ff;
+      --reachy: #ffa657;
+      --tool: #d2a8ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+    header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+    h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    #state {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    #state.listening { color: #000; background: var(--accent); border-color: var(--accent); }
+    #state.speaking { color: #000; background: var(--reachy); border-color: var(--reachy); }
+    #state.disconnected, #state.disconnecting { color: #fff; background: #6e3636; border-color: #6e3636; }
+    #disconnect {
+      margin-left: auto;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #disconnect:hover { color: #fff; background: #6e3636; border-color: #6e3636; }
+    #disconnect:disabled { opacity: 0.4; cursor: default; }
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+      height: calc(100vh - 53px);
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel h2 { margin: 0 0 10px 0; font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    #frame-wrap { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; }
+    #frame { max-width: 100%; max-height: 100%; border-radius: 6px; object-fit: contain; }
+    .scrolly { overflow-y: auto; flex: 1; min-height: 0; }
+    .msg { padding: 6px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; line-height: 1.4; }
+    .msg .who { font-size: 11px; color: var(--muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .msg.user .who { color: var(--user); }
+    .msg.reachy .who { color: var(--reachy); }
+    .msg.tool { background: rgba(210, 168, 255, 0.08); border-left: 2px solid var(--tool); font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 12px; }
+    .msg.tool .who { color: var(--tool); }
+    .msg.tool .args { color: var(--muted); font-size: 11px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Reachy Voice Agent</h1>
+    <span id="state">connecting…</span>
+    <button id="disconnect">Disconnect</button>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>Reachy's view</h2>
+      <div id="frame-wrap"><img id="frame" alt="camera frame" /></div>
+    </section>
+    <section class="panel">
+      <h2>Transcript & tools</h2>
+      <div id="log" class="scrolly"></div>
+    </section>
+  </main>
+  <script>
+    const log = document.getElementById("log");
+    const stateBadge = document.getElementById("state");
+    const frame = document.getElementById("frame");
+
+    // Refresh camera frame every 1s.
+    function refreshFrame() {
+      frame.src = "/api/frame?t=" + Date.now();
+    }
+    refreshFrame();
+    setInterval(refreshFrame, 1000);
+
+    function setState(s) {
+      stateBadge.className = s;
+      stateBadge.textContent = s;
+    }
+
+    const userMsgs = new Map();
+    const reachyMsgs = new Map();
+
+    function appendMsg(cls, who, text) {
+      const div = document.createElement("div");
+      div.className = "msg " + cls;
+      const w = document.createElement("div");
+      w.className = "who";
+      w.textContent = who;
+      const t = document.createElement("div");
+      t.textContent = text;
+      div.appendChild(w);
+      div.appendChild(t);
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+      return t;
+    }
+
+    function appendOrUpdate(cls, who, key, text) {
+      const map = cls === "user" ? userMsgs : reachyMsgs;
+      let t = map.get(key);
+      if (!t) {
+        t = appendMsg(cls, who, text);
+        map.set(key, t);
+      } else {
+        t.textContent = text;
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+
+    function appendTool(name, args, result) {
+      const div = document.createElement("div");
+      div.className = "msg tool";
+      const w = document.createElement("div");
+      w.className = "who";
+      w.textContent = name;
+      const a = document.createElement("div");
+      a.className = "args";
+      a.textContent = (args && Object.keys(args).length ? JSON.stringify(args) : "") +
+                      (result ? "  →  " + result : "");
+      div.appendChild(w);
+      div.appendChild(a);
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    const es = new EventSource("/api/stream");
+    es.onmessage = (e) => {
+      const ev = JSON.parse(e.data);
+      if (ev.type === "state") setState(ev.value);
+      else if (ev.type === "transcript") {
+        if (ev.who === "user") {
+          appendOrUpdate("user", "you", ev.id || "u", ev.text);
+        } else {
+          appendOrUpdate("reachy", "reachy", ev.id || "r", ev.text);
+        }
+      } else if (ev.type === "tool") {
+        appendTool(ev.name, ev.args || {}, ev.result || "");
+      }
+    };
+    es.onerror = () => setState("disconnected");
+    setState("idle");
+
+    document.getElementById("disconnect").addEventListener("click", async () => {
+      const btn = document.getElementById("disconnect");
+      btn.disabled = true;
+      btn.textContent = "Disconnecting…";
+      setState("disconnecting");
+      try {
+        await fetch("/api/shutdown", { method: "POST" });
+      } catch {}
+    });
+  </script>
+</body>
+</html>

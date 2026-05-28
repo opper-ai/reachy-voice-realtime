@@ -1,0 +1,6 @@
+reachy_mini_env/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+/tmp/
