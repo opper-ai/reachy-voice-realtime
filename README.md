@@ -1,7 +1,7 @@
 # Reachy Mini playground
 
-Code for driving a Reachy Mini Lite (USB), a small expressive desktop robot.
-Two interfaces live here:
+Code for driving a [Reachy Mini Lite](https://huggingface.co/reachy-mini) (USB),
+a small expressive desktop robot. Two interfaces live here:
 
 - **`behaviors.py`**: a handful of canned emote behaviors with a one-shot CLI.
 - **`reachy_agent/`**: a real-time voice agent. The model becomes Reachy, hears
@@ -16,10 +16,10 @@ and you only need an Opper credential (`OPPER_API_KEY` or `--opper-login`).
 ## Quickstart
 
 ```bash
-# One-time install (needs uv: https://docs.astral.sh/uv/)
-uv venv reachy_mini_env --python 3.12
+# One-time install (needs Python 3.12+)
+python3.12 -m venv reachy_mini_env
 source reachy_mini_env/bin/activate
-uv pip install reachy-mini websockets httpx fastapi 'uvicorn[standard]' sounddevice Pillow python-dotenv
+pip install reachy-mini websockets httpx fastapi 'uvicorn[standard]' sounddevice Pillow python-dotenv
 ```
 
 Plug Reachy in over USB, then open two terminals (activate the venv in each
@@ -49,25 +49,7 @@ Open <http://localhost:1080> and talk to Reachy. Details below.
 │   ├── prompt.py           "You are Reachy" system prompt
 │   ├── server.py           Tiny FastAPI sidecar (SSE + frame stream)
 │   └── static/index.html   Observability UI
-└── reachy_mini_env/        uv venv (Python 3.12) — not checked in
-```
-
-## One-time setup
-
-The venv, Reachy Mini SDK, and agent dependencies are already in place. If you
-ever need to recreate it:
-
-```bash
-uv venv reachy_mini_env --python 3.12
-source reachy_mini_env/bin/activate
-uv pip install reachy-mini
-uv pip install websockets httpx fastapi 'uvicorn[standard]' sounddevice Pillow python-dotenv
-```
-
-Activate the venv before running anything:
-
-```bash
-source reachy_mini_env/bin/activate
+└── reachy_mini_env/        Python 3.12 venv (not checked in)
 ```
 
 ## Run the daemon
