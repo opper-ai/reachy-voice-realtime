@@ -1,10 +1,10 @@
 # Reachy Mini playground
 
-Code for driving a Reachy Mini Lite (USB) — a small expressive desktop robot.
+Code for driving a Reachy Mini Lite (USB), a small expressive desktop robot.
 Two interfaces live here:
 
-- **`behaviors.py`** — a handful of canned emote behaviors with a one-shot CLI.
-- **`reachy_agent/`** — a real-time voice agent: the model becomes Reachy, hears
+- **`behaviors.py`**: a handful of canned emote behaviors with a one-shot CLI.
+- **`reachy_agent/`**: a real-time voice agent. The model becomes Reachy, hears
   through Reachy's mic, sees through its camera, talks through its speaker, and
   calls motion tools to physically react.
 
@@ -101,10 +101,10 @@ pkill -f reachy-mini-daemon
 ```
 
 > **Heads up:** only one client can hold the USB serial port. If the Reachy
-> Mini Control desktop app is open, it will fight the daemon — quit one or the
+> Mini Control desktop app is open, it will fight the daemon. Quit one or the
 > other.
 
-## `behaviors.py` — quick emotes
+## `behaviors.py`: quick emotes
 
 Single CLI, one behavior per invocation:
 
@@ -137,7 +137,7 @@ with ReachyMini(port=1111) as mini:
     dance(mini)
 ```
 
-## `reachy_agent` — voice agent
+## `reachy_agent`: voice agent
 
 The model hears via Reachy's mic, sees via Reachy's camera, replies through
 Reachy's speaker, and calls motion tools to move while it talks.
@@ -156,15 +156,15 @@ Then open <http://localhost:1080> and talk to Reachy.
 
 Two ways to authenticate, in priority order:
 
-1. **`OPPER_API_KEY`** — env var, or in a `.env` next to where you run from.
+1. **`OPPER_API_KEY`**: env var, or in a `.env` next to where you run from.
    Wins over everything else; right for CI, scripts, or pinning a project to a
    specific key.
-2. **`~/.opper/config.json`** — shared with the [Opper CLI](https://github.com/opper-ai/cli).
+2. **`~/.opper/config.json`**: shared with the [Opper CLI](https://github.com/opper-ai/cli).
    If you've already run `opper login`, reachy uses that credential. Otherwise
    `python -m reachy_agent --opper-login` runs the device flow itself
    (opens your browser, you confirm a short code, the key gets stored).
 
-No client-side secret is involved — the device flow exchanges a user
+No client-side secret is involved. The device flow exchanges a user
 confirmation for an API key the server mints for you.
 
 ### Common flags
@@ -196,7 +196,7 @@ Stop with **Ctrl-C** in the terminal, or click **Disconnect** in the UI.
 |---|---|
 | Emotes (canned) | `greet`, `nod`, `shake_head`, `wiggle_antennas`, `dance`, `look_confused`, `wave`, `lean`, `look_around`, `sleep`, `wake_up` |
 | Motor primitives | `set_head`, `set_antennas`, `set_body_yaw`, `look_at` (image-space) |
-| Composing | `perform_sequence` — list of keyframes for ad-hoc gestures (used to mirror your wave / nod / lean) |
+| Composing | `perform_sequence`: list of keyframes for ad-hoc gestures (used to mirror your wave / nod / lean) |
 | Perception | `look` (fresh camera frame as image.input), `get_sound_direction` (DoA), `turn_toward_sound` (orient body) |
 
 The prompt tells the model to mimic the human: see you wave → wave back; see
@@ -226,8 +226,8 @@ the side → turn toward it.
 `--reasoning-effort {minimal,low,medium,high,xhigh}`. `low` is the default and
 right for most chat. Bump to `medium` when you want better tool sequencing
 (e.g. "look first, then react" chains). `minimal` is snappiest but uses tools
-less. `xhigh` is slow — only for puzzles you've explicitly told it to think
-through.
+less. `xhigh` is slow; use it only for puzzles you've explicitly told it to
+think through.
 
 ### Sound localisation
 
@@ -237,8 +237,8 @@ A background thread polls Reachy's direction-of-arrival mic array (`get_DoA`)
 - The `turn_toward_sound` tool reads from the buffer (DoA captured *while* you
   were talking, not the silent moment after).
 - `--auto-orient` runs an ambient loop that smoothly nudges body + head
-  together toward the buffered direction whenever Reachy isn't speaking — so
-  the robot physically faces whoever just spoke, without the model having to
+  together toward the buffered direction whenever Reachy isn't speaking, so
+  the robot physically faces whoever just spoke without the model having to
   decide to. Head leads, body follows, looks like a real turn.
 
 ### UI
@@ -249,31 +249,39 @@ A background thread polls Reachy's direction-of-arrival mic array (`get_DoA`)
 - Scrolling transcript (you + Reachy)
 - Tool-call log (name + args + result)
 - State badge (idle / listening / speaking / disconnecting)
-- Disconnect button (triggers a graceful shutdown — same as Ctrl-C)
+- Disconnect button (triggers a graceful shutdown, same as Ctrl-C)
 
 ## Troubleshooting
 
-**`command not found: reachy-mini-daemon`** or **`No module named 'reachy_mini'`** —
+**`command not found: reachy-mini-daemon`** or **`No module named 'reachy_mini'`**:
 venv isn't active in this shell. Run `source reachy_mini_env/bin/activate`
 (the prompt will show `(reachy_mini_env)`). Or invoke the binary by absolute
 path: `./reachy_mini_env/bin/reachy-mini-daemon --fastapi-port 1111`.
 
-**`PermissionError [Errno 13]` on a port** — macOS reserves ports below 1024.
+**`PermissionError [Errno 13]` on a port**: macOS reserves ports below 1024.
 Pick a higher one with `--ui-port`.
 
-**Audio comes from MacBook speakers, not Reachy** — should not happen anymore;
+**Audio comes from MacBook speakers, not Reachy**: should not happen anymore;
 the agent writes directly to the `Reachy Mini Audio` USB device via
 `sounddevice`. If it returns, check that the device shows up in
 `python -c "import sounddevice; print(sounddevice.query_devices())"`.
 
-**Daemon dies after a while / port already in use** — only one daemon can hold
+**Daemon dies after a while / port already in use**: only one daemon can hold
 the USB serial port. Find the holder with
 `lsof -nP -iTCP:1111 -sTCP:LISTEN`, kill it, restart.
 
-**`conversation_already_has_active_response`** — racing the model. The `look`
+**`conversation_already_has_active_response`**: racing the model. The `look`
 tool no longer triggers a second response.create; if you add new tools that
 attach data to the conversation, do *not* send `response.create` from within a
 tool that runs mid-turn.
 
-**Pyright/IDE complains about missing imports** — your editor isn't using the
+**Pyright/IDE complains about missing imports**: your editor isn't using the
 venv interpreter. Point it at `reachy_mini_env/bin/python`. The code runs fine.
+
+## License
+
+MIT
+
+## Author
+
+Jose Sabater
