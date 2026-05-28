@@ -35,6 +35,10 @@ python -m reachy_agent --opper-login
 
 Open <http://localhost:1080> and talk to Reachy. Details below.
 
+### Demo
+
+https://github.com/user-attachments/assets/79a9bcc1-791f-416d-ba5a-cfde2915e325
+
 ## Layout
 
 ```
