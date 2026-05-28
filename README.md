@@ -16,8 +16,16 @@ and you only need an Opper credential (`OPPER_API_KEY` or `--opper-login`).
 ## Quickstart
 
 ```bash
+# One-time install (needs uv: https://docs.astral.sh/uv/)
+uv venv reachy_mini_env --python 3.12
 source reachy_mini_env/bin/activate
+uv pip install reachy-mini websockets httpx fastapi 'uvicorn[standard]' sounddevice Pillow python-dotenv
+```
 
+Plug Reachy in over USB, then open two terminals (activate the venv in each
+with `source reachy_mini_env/bin/activate`):
+
+```bash
 # Terminal 1: daemon (owns the USB connection to Reachy)
 reachy-mini-daemon --fastapi-port 1111
 
