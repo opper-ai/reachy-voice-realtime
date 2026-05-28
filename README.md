@@ -13,6 +13,20 @@ proxied through **[Opper](https://opper.ai)**. Opper handles auth (OAuth device
 flow, no client-side OpenAI key needed), mints short-lived WebSocket tickets,
 and you only need an Opper credential (`OPPER_API_KEY` or `--opper-login`).
 
+## Quickstart
+
+```bash
+source reachy_mini_env/bin/activate
+
+# Terminal 1: daemon (owns the USB connection to Reachy)
+reachy-mini-daemon --fastapi-port 1111
+
+# Terminal 2: voice agent (first run only needs --opper-login)
+python -m reachy_agent --opper-login
+```
+
+Open <http://localhost:1080> and talk to Reachy. Details below.
+
 ## Layout
 
 ```
